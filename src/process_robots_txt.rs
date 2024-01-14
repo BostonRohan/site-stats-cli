@@ -1,16 +1,91 @@
 use reqwest;
 use std::error::Error;
+use texting_robots::Robot;
+use std::str;
+use chrono::naive::NaiveTime;
+use chrono::{Local};
+
+//based on this article https://www.zenrows.com/blog/robots-txt-web-scraping#robots-txt-web-scraping
+
+fn parse_visit_time(input: &str) -> Option<String> {
+    // Find the position of "Visit-time:"
+    if let Some(visit_time_index) = input.find("Visit-time:") {
+        // Skip the "Visit-time:" part
+        let remaining_string = &input[visit_time_index + "Visit-time:".len()..];
+
+        // Find the end of the visit time value (up to the next newline)
+        if let Some(newline_index) = remaining_string.find('\n') {
+            let visit_time = &remaining_string[..newline_index].trim();
+            return Some(visit_time.to_string());
+        }
+    }
+
+    None
+}
+
+
 
 pub async fn process_robots_txt(input: &str) -> Result<(), Box<dyn Error>>{
+    //robots.txt has to be on the root of the site
+    //when a url is split by a / you get -> ["https:", "", "site.com", "about", ""] --> https://site.com/about/
+    let paths = input.split('/').collect::<Vec<&str>>();
+
+    //base path will always be at position 2 but we need the https:// included
+    let base_path = paths[..=3].join("/");
+
+
     //ping the robots.txt file and see if it exists on the following site
-    if !reqwest::get(format!("{}{}", input, "robots.txt"))
-    .await?
-    .status()
-    .is_success()
-{
+
+   let res = reqwest::get(format!("{}{}", base_path, "robots.txt")).await?;
+
+
+   if !res.status().is_success() {
     println!("The following site does not have a robots.txt file, if this is your site - it is advised that you create one. \nhttps://developers.google.com/search/docs/crawling-indexing/robots/intro#:~:text=A%20robots.txt%20file%20tells,or%20password%2Dprotect%20the%20page. ");
+   }
+
+   let txt = res.bytes().await?;
+
+
+   let robot = Robot::new("Crawler", &txt).unwrap();
+
+
+   //see if we are allowed to crawl the site
+   if !str::from_utf8(&txt).unwrap().contains("User-agent: *") || !robot.allowed("/") {
+    println!("we are not allowed to crawl the following site :(");
+   } 
+
+   //see if we are in visiting time hours
+   if let Some(visit_time) = parse_visit_time(str::from_utf8(&txt).unwrap()) {
+
+
+    let visit_time_start_end: Vec<&str> = visit_time.split('-').collect();
+
+
+    //only check the visit time if it is in time format - the other format is for requests
+    if visit_time_start_end.len() == 2 {
+    if let Ok(start_time) = NaiveTime::parse_from_str(visit_time_start_end[0], "%H%M") {
+        if let Ok(end_time) = NaiveTime::parse_from_str(visit_time_start_end[1], "%H%M") {
+            let current_datetime = Local::now();
+           if !(current_datetime.time() >= start_time && current_datetime.time() <= end_time) {
+            return Err(format!("Based on the robots.txt, we are not within visiting hours to crawl this website. Please try again at {}", start_time.format("%I:%M %p")).into());
+           }
+        } else{
+            println!("Failed to parse end time");
+            return Err("We were not able to verify that we are following compliances via the robots.txt file, if this is your site double check the Visit-Time".into());
+        }
+    } else{
+        println!("Failed to parse start time");
+        return Err("We were not able to verify that we are following compliances via the robots.txt file, if this is your site double check the Visit-Time".into());
+    }
 }
-        //TODO: read that robots txt file to find a sitemap(s)
+   }
+   
+
+   //see if the path entered is allowed to crawl
+
+
+
+//possibly find sitemap (sitemaps aren't always listed in the robots.txt file)
 
 Ok(())
 }
