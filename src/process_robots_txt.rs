@@ -48,10 +48,13 @@ pub async fn process_robots_txt(input: &str) -> Result<(), Box<dyn Error>>{
 
    let robot = Robot::new("Crawler", &txt).unwrap();
 
+   let mut notified_uncrawlable = false;
+
 
    //see if we are allowed to crawl the site
    if !str::from_utf8(&txt).unwrap().contains("User-agent: *") || !robot.allowed("/") {
     println!("we are not allowed to crawl the following site :(");
+    notified_uncrawlable = true;
    } 
 
    //see if we are in visiting time hours
@@ -67,24 +70,29 @@ pub async fn process_robots_txt(input: &str) -> Result<(), Box<dyn Error>>{
         if let Ok(end_time) = NaiveTime::parse_from_str(visit_time_start_end[1], "%H%M") {
             let current_datetime = Local::now();
            if !(current_datetime.time() >= start_time && current_datetime.time() <= end_time) {
-            return Err(format!("Based on the robots.txt, we are not within visiting hours to crawl this website. Please try again at {}", start_time.format("%I:%M %p")).into());
+            println!("{}", format!("Based on the robots.txt, we are not within visiting hours to crawl this website. Please try again at {}", start_time.format("%I:%M %p")));
            }
         } else{
             println!("Failed to parse end time");
-            return Err("We were not able to verify that we are following compliances via the robots.txt file, if this is your site double check the Visit-Time".into());
+            println!("We were not able to verify that we are following compliances via the robots.txt file, if this is your site double check the Visit-Time");
         }
     } else{
         println!("Failed to parse start time");
-        return Err("We were not able to verify that we are following compliances via the robots.txt file, if this is your site double check the Visit-Time".into());
+        println!("We were not able to verify that we are following compliances via the robots.txt file, if this is your site double check the Visit-Time");
     }
 }
    }
    
 
    //see if the path entered is allowed to crawl
+   let path = paths[3..paths.len()].join("/");
 
+   if !robot.allowed(&path) && !notified_uncrawlable {
+    println!("we are not allowed to crawl the path, please try another page for more information about this site.");
+   }
 
 //possibly find sitemap (sitemaps aren't always listed in the robots.txt file)
+
 
 Ok(())
 }
