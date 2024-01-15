@@ -3,7 +3,7 @@ use std::error::Error;
 use texting_robots::Robot;
 use std::str;
 use chrono::naive::NaiveTime;
-use chrono::{Local};
+use chrono::Local;
 
 //based on this article https://www.zenrows.com/blog/robots-txt-web-scraping#robots-txt-web-scraping
 
@@ -82,7 +82,6 @@ pub async fn process_robots_txt(input: &str) -> Result<(), Box<dyn Error>>{
    
 
    //see if the path entered is allowed to crawl
-
 
 
 //possibly find sitemap (sitemaps aren't always listed in the robots.txt file)

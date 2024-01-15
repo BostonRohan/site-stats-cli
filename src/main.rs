@@ -32,6 +32,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         input = input + "/";
     }
 
+    //add url prefix if not there - assume we're using https
+    if !input.starts_with("https://") {
+        input = "https://".to_owned() + &input;
+    }
+
     process_url(&input).await?;
     process_robots_txt(&input).await?;
 
