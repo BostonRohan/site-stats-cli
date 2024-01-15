@@ -38,8 +38,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     process_url(&input).await?;
-    process_robots_txt(&input).await?;
-
+    let robots_sitemaps = process_robots_txt(&input).await?;
 
     Ok(())
 }

@@ -25,7 +25,7 @@ fn parse_visit_time(input: &str) -> Option<String> {
 
 
 
-pub async fn process_robots_txt(input: &str) -> Result<(), Box<dyn Error>>{
+pub async fn process_robots_txt(input: &str) -> Result<Vec<String>, Box<dyn Error>>{
     //robots.txt has to be on the root of the site
     //when a url is split by a / you get -> ["https:", "", "site.com", "about", ""] --> https://site.com/about/
     let paths = input.split('/').collect::<Vec<&str>>();
@@ -92,7 +92,9 @@ pub async fn process_robots_txt(input: &str) -> Result<(), Box<dyn Error>>{
    }
 
 //possibly find sitemap (sitemaps aren't always listed in the robots.txt file)
+if robot.sitemaps.len() == 0 {
+    println!("there is no mention of a sitemap in the robots.txt, if this is your site it is recommended that you add one. \nhttps://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap?hl=en&sjid=15467058254278674160-NC&visit_id=638408798372148862-3622568734&rd=1#addsitemap")
+}
 
-
-Ok(())
+return Ok(robot.sitemaps);
 }
