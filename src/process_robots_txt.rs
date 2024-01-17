@@ -40,7 +40,7 @@ pub async fn process_robots_txt(input: &str) -> Result<Vec<String>, Box<dyn Erro
 
 
    if !res.status().is_success() {
-    println!("The following site does not have a robots.txt file, if this is your site - it is advised that you create one. \nhttps://developers.google.com/search/docs/crawling-indexing/robots/intro#:~:text=A%20robots.txt%20file%20tells,or%20password%2Dprotect%20the%20page. ");
+    info!("The following site does not have a robots.txt file, if this is your site - it is advised that you create one. \nhttps://developers.google.com/search/docs/crawling-indexing/robots/intro#:~:text=A%20robots.txt%20file%20tells,or%20password%2Dprotect%20the%20page. ");
    }
 
    let txt = res.bytes().await?;
@@ -53,7 +53,7 @@ pub async fn process_robots_txt(input: &str) -> Result<Vec<String>, Box<dyn Erro
 
    //see if we are allowed to crawl the site
    if !str::from_utf8(&txt).unwrap().contains("User-agent: *") || !robot.allowed("/") {
-    println!("we are not allowed to crawl the following site :(");
+    warn!("we are not allowed to crawl the following site :(");
     notified_uncrawlable = true;
    } 
 
@@ -70,15 +70,15 @@ pub async fn process_robots_txt(input: &str) -> Result<Vec<String>, Box<dyn Erro
         if let Ok(end_time) = NaiveTime::parse_from_str(visit_time_start_end[1], "%H%M") {
             let current_datetime = Local::now();
            if !(current_datetime.time() >= start_time && current_datetime.time() <= end_time) {
-            println!("{}", format!("Based on the robots.txt, we are not within visiting hours to crawl this website. Please try again at {}", start_time.format("%I:%M %p")));
+            warn!("{}", format!("Based on the robots.txt, we are not within visiting hours to crawl this website. Please try again at {}", start_time.format("%I:%M %p")));
            }
         } else{
-            println!("Failed to parse end time");
-            println!("We were not able to verify that we are following compliances via the robots.txt file, if this is your site double check the Visit-Time");
+            error!("Failed to parse end time");
+            info!("We were not able to verify that we are following compliances via the robots.txt file, if this is your site double check the Visit-Time");
         }
     } else{
-        println!("Failed to parse start time");
-        println!("We were not able to verify that we are following compliances via the robots.txt file, if this is your site double check the Visit-Time");
+        error!("Failed to parse start time");
+        info!("We were not able to verify that we are following compliances via the robots.txt file, if this is your site double check the Visit-Time");
     }
 }
    }
@@ -88,12 +88,12 @@ pub async fn process_robots_txt(input: &str) -> Result<Vec<String>, Box<dyn Erro
    let path = paths[3..paths.len()].join("/");
 
    if !robot.allowed(&path) && !notified_uncrawlable {
-    println!("we are not allowed to crawl the path, please try another page for more information about this site.");
+    info!("We are not allowed to crawl the path, please try another page for more information about this site.");
    }
 
 //possibly find sitemap (sitemaps aren't always listed in the robots.txt file)
 if robot.sitemaps.len() == 0 {
-   info!("there is no mention of a sitemap in the robots.txt, if this is your site it is recommended that you add one. \nhttps://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap?hl=en&sjid=15467058254278674160-NC&visit_id=638408798372148862-3622568734&rd=1#addsitemap")
+   info!("there is no mention of a sitemap in the robots.txt, if this is your site, it is recommended that you add one. \nhttps://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap?hl=en&sjid=15467058254278674160-NC&visit_id=638408798372148862-3622568734&rd=1#addsitemap")
 }
 
 return Ok(robot.sitemaps);

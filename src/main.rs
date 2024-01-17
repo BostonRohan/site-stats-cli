@@ -8,6 +8,9 @@ use std::{
 mod process_url;
 mod process_robots_txt;
 
+extern crate pretty_env_logger;
+#[macro_use] extern crate log;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     println!("Welcome to site stats!");
