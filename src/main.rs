@@ -1,5 +1,6 @@
 use process_url::process_url;
 use process_robots_txt::process_robots_txt;
+use process_sitemaps::process_sitemaps;
 use std::{
     error::Error,
     io::{self, Write},
@@ -7,6 +8,7 @@ use std::{
 
 mod process_url;
 mod process_robots_txt;
+mod process_sitemaps;
 
 extern crate pretty_env_logger;
 #[macro_use] extern crate log;
@@ -42,6 +44,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     process_url(&input).await?;
     let robots_sitemaps = process_robots_txt(&input).await?;
+
+    let pages = process_sitemaps(&robots_sitemaps).await;
+
+    println!("{:?}", pages);
+
 
     Ok(())
 }
