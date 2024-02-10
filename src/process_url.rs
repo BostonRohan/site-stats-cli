@@ -1,7 +1,6 @@
 use reqwest;
-use url::Url;
 use std::error::Error;
-
+use url::Url;
 
 pub async fn process_url(input: &str) -> Result<(), Box<dyn Error>> {
     let url = Url::parse(input)
