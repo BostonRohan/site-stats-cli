@@ -1,3 +1,4 @@
+use format_input::format_input;
 use process_robots_txt::process_robots_txt;
 use process_sitemaps::process_sitemaps;
 use process_url::process_url;
@@ -6,6 +7,7 @@ use std::{
     io::{self, Write},
 };
 
+pub mod format_input;
 mod process_robots_txt;
 mod process_sitemaps;
 mod process_url;
@@ -33,17 +35,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .read_line(&mut input)
         .expect("There was an error reading the input");
 
-    input = input.trim().to_string();
-
-    //add a / to the end of the url if it isn't there
-    if input.chars().last().unwrap() != '/' {
-        input = input + "/";
-    }
-
-    //add url prefix if not there - assume we're using https
-    if !input.starts_with("https://") {
-        input = "https://".to_owned() + &input;
-    }
+    input = format_input(input);
 
     process_url(&input).await?;
     //TODO: ask if the user wants these tasks, maybe they only want to look at the direct url they pasted and not the base site
